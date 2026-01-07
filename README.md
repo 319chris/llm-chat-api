@@ -44,7 +44,7 @@ docker run --rm -v "$PWD:/app" -w /app llm-chat-api-ci make build
 docker run --rm -v "$PWD:/app" -w /app llm-chat-api-ci make tf-validate
 ```
 
-##Build for AWS Lambda (recommended)
+## Build for AWS Lambda (recommended)
 
 If you’re on macOS (especially Apple Silicon), building the Lambda zip locally can produce
 platform-specific wheels (e.g. pydantic_core) that fail on Lambda’s Linux runtime.
@@ -54,7 +54,7 @@ Use the amd64 build target to generate a Lambda-compatible artifact:
 make build-amd64
 ```
 
-##Deploy to AWS (manual)
+## Deploy to AWS (manual)
 
 Region defaults to ap-southeast-2 (Sydney).
 CI does not apply Terraform – deploy is manual.
@@ -92,7 +92,7 @@ aws secretsmanager put-secret-value \
 unset OPENAI_KEY
 ```
 
-##Test the API
+## Test the API
 
 ```bash
 cd infra
@@ -108,7 +108,7 @@ curl -sS -X POST "$CHAT_URL" \
 
 ```
 
-##Example response
+## Example response
 
 ```bash
 {
@@ -125,19 +125,19 @@ curl -sS -X POST "$CHAT_URL" \
 }
 ```
 
-##Security notes
+## Security notes
 	•	OpenAI API key is stored in AWS Secrets Manager and referenced by ARN in Lambda env vars.
 	•	Lambda IAM policy is least-privilege:
 	•	secretsmanager:GetSecretValue only for the configured secret
 	•	CloudWatch Logs write permissions only
 	•	The handler never logs request bodies or secrets.
 
-##Phase 2 expansion points
+## Phase 2 expansion points
 	•	src/rag/ – placeholder for retrieval + prompt assembly
 	•	src/tools/ – placeholder for tool calling router/registry
 	•	src/integrations/autoprice/ – placeholder for external integration
 
-##Troubleshooting
+## Troubleshooting
 	•	500 / ImportModuleError (pydantic_core) on Lambda: rebuild with make build-amd64 and terraform apply.
 	•	Upstream 429: check OpenAI billing/credits or reduce request rate.
 	•	Secrets errors: confirm secret value exists and Lambda role can read the secret ARN.
