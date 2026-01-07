@@ -141,3 +141,9 @@ curl -sS -X POST "$CHAT_URL" \
 	•	500 / ImportModuleError (pydantic_core) on Lambda: rebuild with make build-amd64 and terraform apply.
 	•	Upstream 429: check OpenAI billing/credits or reduce request rate.
 	•	Secrets errors: confirm secret value exists and Lambda role can read the secret ARN.
+
+## Incident note (real-world debug)
+
+During the first I got a `Runtime.ImportModuleError` on Lambda (`pydantic_core` missing).  
+CloudWatch Logs tell me the dependency was packaged for macOS/arm64, not Lambda’s Linux runtime.  
+Fix: rebuild the artifact in a `linux/amd64` container via Docker buildx and codify it as `make build-amd64` to prevent regressions.
