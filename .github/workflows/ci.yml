@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test-validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build CI Docker image
+        run: |
+          docker build -t llm-chat-api-ci .
+
+      - name: Pytest
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            llm-chat-api-ci \
+            make test
+
+      - name: Build Lambda zip (artifact step)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            llm-chat-api-ci \
+            make build
+
+      - name: Terraform fmt/validate (no apply)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            llm-chat-api-ci \
+            make tf-validate
