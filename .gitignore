@@ -18,3 +18,7 @@ infra/*.tfstate.backup
 # Terraform plan artifacts
 infra/tfplan
 *.tfplan
+
+# Terraform plan artifacts
+infra/tfplan
+*.tfplan
