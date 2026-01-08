@@ -13,6 +13,7 @@
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     pre { background: #0b0f19; color: #e6edf3; padding: 14px; border-radius: 10px; overflow: auto; }
     button { cursor: pointer; font-weight: 600; }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
     .small { font-size: 12px; color: #666; }
   </style>
 </head>
@@ -30,69 +31,90 @@
     </div>
     <div>
       <label>max_tokens</label>
-      <input id="maxTokens" type="number" step="1" value="128" />
+      <input id="maxTokens" type="number" step="1" value="64" />
     </div>
   </div>
 
   <label>message</label>
   <textarea id="msg" placeholder="Say hello in one sentence."></textarea>
 
-  <button id="send">Send</button>
+  <!-- IMPORTANT: type="button" prevents form-submit refresh issues -->
+  <button id="send" type="button">Send</button>
   <p class="small">Tip: This calls your live AWS endpoint. Keep max_tokens small to control cost.</p>
 
   <h2>Response</h2>
   <pre id="out">{}</pre>
 
   <script>
-    const chatUrlEl = document.getElementById("chatUrl");
-    const tempEl = document.getElementById("temp");
-    const maxTokensEl = document.getElementById("maxTokens");
-    const msgEl = document.getElementById("msg");
-    const outEl = document.getElementById("out");
-    const sendBtn = document.getElementById("send");
-    console.log({ chatUrlEl, tempEl, maxTokensEl, msgEl, outEl, sendBtn });
-    if (!chatUrlEl || !tempEl || !maxTokensEl || !msgEl || !outEl || !sendBtn) {
-        throw new Error("Demo UI element id mismatch. Check HTML ids vs JS getElementById().");
-}
+    // Run only after DOM is ready (prevents null element issues)
+    window.addEventListener("DOMContentLoaded", () => {
+      const chatUrlEl = document.getElementById("chatUrl");
+      const tempEl = document.getElementById("temp");
+      const maxTokensEl = document.getElementById("maxTokens");
+      const msgEl = document.getElementById("msg");
+      const outEl = document.getElementById("out");
+      const sendBtn = document.getElementById("send");
 
-// Pre-fill chat_url from query param, fallback to localStorage
-    const params = new URLSearchParams(window.location.search);
-    const preset = params.get("chat_url");
-    const presetUrl = preset ? decodeURIComponent(preset) : "";
-    chatUrlEl.value = presetUrl || localStorage.getItem("chat_url") || "";
-
-// Save chat_url on change
-
-    function pretty(obj) {
-      return JSON.stringify(obj, null, 2);
-    }
-
-    sendBtn.addEventListener("click", async () => {
-      const chatUrl = chatUrlEl.value.trim();
-      if (!chatUrl) {
-        outEl.textContent = "Please paste chat_url first.";
+      // Hard fail early if ids mismatch
+      if (!chatUrlEl || !tempEl || !maxTokensEl || !msgEl || !outEl || !sendBtn) {
+        console.error("Element id mismatch", { chatUrlEl, tempEl, maxTokensEl, msgEl, outEl, sendBtn });
+        outEl.textContent = "Error: UI element id mismatch. Open Console to see details.";
         return;
       }
-      localStorage.setItem("chat_url", chatUrl);
 
-      const payload = {
-        messages: [{ role: "user", content: msgEl.value || "Say hello in one sentence." }],
-        temperature: Number(tempEl.value || 0.2),
-        max_tokens: Number(maxTokensEl.value || 128),
-      };
+      console.log("Demo script loaded ✅");
 
-      outEl.textContent = "Sending...";
-      try {
-        const r = await fetch(chatUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await r.json().catch(() => ({ message: "Non-JSON response" }));
-        outEl.textContent = pretty(data);
-      } catch (e) {
-        outEl.textContent = String(e);
+      // Prefill chat_url from query param, fallback to localStorage
+      const params = new URLSearchParams(window.location.search);
+      const preset = params.get("chat_url");
+      const presetUrl = preset ? decodeURIComponent(preset) : "";
+      chatUrlEl.value = presetUrl || localStorage.getItem("chat_url") || "";
+
+      chatUrlEl.addEventListener("input", () => {
+        localStorage.setItem("chat_url", chatUrlEl.value);
+      });
+
+      function pretty(obj) {
+        return JSON.stringify(obj, null, 2);
       }
+
+      sendBtn.addEventListener("click", async () => {
+        console.log("Send clicked ✅");
+
+        const chatUrl = chatUrlEl.value.trim();
+        if (!chatUrl) {
+          outEl.textContent = "Please paste chat_url first.";
+          return;
+        }
+
+        const payload = {
+          messages: [{ role: "user", content: msgEl.value || "Say hello in one sentence." }],
+          temperature: Number(tempEl.value || 0.2),
+          max_tokens: Number(maxTokensEl.value || 64),
+        };
+
+        sendBtn.disabled = true;
+        outEl.textContent = "Sending...";
+
+        try {
+          const r = await fetch(chatUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const text = await r.text();
+          let data;
+          try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+          outEl.textContent = pretty({ http_status: r.status, ...data });
+        } catch (e) {
+          outEl.textContent = "TypeError: Failed to fetch\n\n" + String(e) +
+            "\n\nOpen DevTools Console/Network to see if this is CORS.";
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
     });
   </script>
 </body>
