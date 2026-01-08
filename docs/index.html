@@ -52,8 +52,9 @@
     const sendBtn = document.getElementById("send");
 
     // remember last chat_url in browser
-    chatUrlEl.value = localStorage.getItem("chat_url") || "";
-
+    const preset = params.get("chat_url");
+    const presetUrl = preset ? decodeURIComponent(preset) : "";
+    chatUrlEl.value = presetUrl || localStorage.getItem("chat_url") || "";
     function pretty(obj) {
       return JSON.stringify(obj, null, 2);
     }
