@@ -51,8 +51,8 @@
     const outEl = document.getElementById("out");
     const sendBtn = document.getElementById("send");
     console.log({ chatUrlEl, tempEl, maxTokensEl, msgEl, outEl, sendBtn });
-if (!chatUrlEl || !tempEl || !maxTokensEl || !msgEl || !outEl || !sendBtn) {
-  throw new Error("Demo UI element id mismatch. Check HTML ids vs JS getElementById().");
+    if (!chatUrlEl || !tempEl || !maxTokensEl || !msgEl || !outEl || !sendBtn) {
+        throw new Error("Demo UI element id mismatch. Check HTML ids vs JS getElementById().");
 }
 
 // Pre-fill chat_url from query param, fallback to localStorage
