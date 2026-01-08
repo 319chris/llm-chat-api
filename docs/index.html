@@ -50,11 +50,19 @@
     const msgEl = document.getElementById("msg");
     const outEl = document.getElementById("out");
     const sendBtn = document.getElementById("send");
+    console.log({ chatUrlEl, tempEl, maxTokensEl, msgEl, outEl, sendBtn });
+if (!chatUrlEl || !tempEl || !maxTokensEl || !msgEl || !outEl || !sendBtn) {
+  throw new Error("Demo UI element id mismatch. Check HTML ids vs JS getElementById().");
+}
 
-    // remember last chat_url in browser
+// Pre-fill chat_url from query param, fallback to localStorage
+    const params = new URLSearchParams(window.location.search);
     const preset = params.get("chat_url");
     const presetUrl = preset ? decodeURIComponent(preset) : "";
     chatUrlEl.value = presetUrl || localStorage.getItem("chat_url") || "";
+
+// Save chat_url on change
+
     function pretty(obj) {
       return JSON.stringify(obj, null, 2);
     }
